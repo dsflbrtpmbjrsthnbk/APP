@@ -1,0 +1,67 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Music Library";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Music Library</h1>
+    <p>Demonstrating seeded random data generation</p>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <form method="get">
+            <div class="input-group">
+                <label class="input-group-text">Songs:</label>
+                <input type="number" name="songCount" value="@Model.SongCount" class="form-control" min="1" max="20" />
+                <label class="input-group-text">Max Reviews:</label>
+                <input type="number" name="reviewAmount" value="@Model.ReviewAmount" class="form-control" min="0" max="10" />
+                <button type="submit" class="btn btn-primary">Generate</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    @foreach (var song in Model.Songs)
+    {
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <img src="@song.CoverImageUrl" class="card-img-top" alt="@song.Title cover" />
+                <div class="card-body">
+                    <h5 class="card-title">@song.Title</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">@song.Artist</h6>
+                    <p class="card-text">
+                        <small>
+                            <strong>Album:</strong> @song.Album<br />
+                            <strong>Genre:</strong> @song.Genre<br />
+                            <strong>Duration:</strong> @TimeSpan.FromSeconds(song.DurationSeconds).ToString(@"mm\:ss")<br />
+                            <strong>Likes:</strong> @song.Likes.ToString("N0")
+                        </small>
+                    </p>
+                    
+                    @if (song.Reviews.Any())
+                    {
+                        <hr />
+                        <h6>Reviews (@song.Reviews.Count):</h6>
+                        <ul class="list-unstyled small">
+                            @foreach (var review in song.Reviews)
+                            {
+                                <li class="mb-1">@review</li>
+                            }
+                        </ul>
+                    }
+                    
+                    @if (song.Audio != null)
+                    {
+                        <hr />
+                        <small class="text-muted">
+                            Audio: @song.Audio.Format.ToUpper() | @song.Audio.Bitrate kbps | @(song.Audio.FileSizeBytes / 1024.0 / 1024.0).ToString("F2") MB
+                        </small>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
