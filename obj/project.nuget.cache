@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "dCRYS4csLXY=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Asus\\Desktop\\MusicApp\\APP\\MusicApp.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Asus\\.nuget\\packages\\bogus\\35.6.1\\bogus.35.6.1.nupkg.sha512"
+  ],
+  "logs": []
+}
