@@ -1,24 +1,23 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Добавляем Razor Pages
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Конфигурация HTTP pipeline
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
-    app.UseHsts();
+    app.UseExceptionHandler("/Error"); // Страница ошибок
+    app.UseHsts();                     // HTTP Strict Transport Security
 }
 
-app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseHttpsRedirection();  // Перенаправление HTTP на HTTPS
+app.UseStaticFiles();       // Подключение wwwroot (CSS, JS, изображения)
 
-app.UseRouting();
+app.UseRouting();           // Маршрутизация
+app.UseAuthorization();     // Авторизация
 
-app.UseAuthorization();
+app.MapRazorPages();        // Подключение Razor Pages
 
-app.MapRazorPages();
-
-app.Run();
+app.Run();                  // Запуск приложения
