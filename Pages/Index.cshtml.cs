@@ -22,16 +22,17 @@ public class IndexModel : PageModel
     public string ViewMode { get; set; } = "gallery";
 
     [BindProperty(SupportsGet = true)]
-    public int Page { get; set; } = 0;
+    public new int Page { get; set; } = 0;  // ← добавлен new, чтобы убрать предупреждение CS0108
 
-    private const int PageSize = 12;
+    private const int PageSize = 10;
 
     public void OnGet()
     {
         AvgLikes = Math.Clamp(AvgLikes, 0, 10);
         Page = Math.Max(0, Page);
 
-        var generator = new ReproducibleSongGenerator(Seed, Locale, AvgLikes);
-        Songs = generator.Generate(Page * PageSize, PageSize);
+        // Используем существующий FakeDataGenerator вместо ReproducibleSongGenerator
+        var generator = new FakeDataGenerator((int)Seed, Locale, AvgLikes);
+        Songs = generator.GenerateSongs(Page * PageSize, PageSize);
     }
 }
