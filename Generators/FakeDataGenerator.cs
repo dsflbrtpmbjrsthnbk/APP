@@ -28,9 +28,6 @@ public class FakeDataGenerator
         _avgLikes = Math.Clamp(avgLikes, 0, 10);
     }
 
-    /// <summary>
-    /// Генерирует список песен начиная с указанного индекса
-    /// </summary>
     public List<Song> GenerateSongs(int startIndex = 0, int count = 10, int maxReviews = 5)
     {
         var songs = new List<Song>();
@@ -40,33 +37,40 @@ public class FakeDataGenerator
         {
             int globalIndex = startIndex + i;
 
-            // Основной seed для структуры песни (название, артист, альбом, жанр, обложка)
+            // Основной seed для структуры песни
             long structureSeed = CombineSeed(_userSeed, globalIndex);
-            var structureRng = new Random((int)(structureSeed & 0x7FFFFFFF));
+
+            // Безопасное приведение long → int для Random
+            int structureSeedInt = (int)(structureSeed & 0x7FFFFFFF); // берём младшие 31 бит
+            var structureRng = new Random(structureSeedInt);
             faker.Random = new Randomizer(structureRng.Next());
+
+            string title = GenerateSongTitle(faker, structureRng);
 
             var song = new Song
             {
                 Id = globalIndex + 1,
-                Title = GenerateSongTitle(faker, structureRng),
+                Title = title,
                 Artist = faker.Name.FullName() ?? faker.Company.CompanyName(),
-                Album = structureRng.Next(5) == 0 ? "Single" : faker.Lorem.Sentence(2..4).TrimEnd('.'),
+                Album = structureRng.Next(5) == 0 ? "Single" : faker.Lorem.Sentence(3), // без Range
                 Genre = faker.Music.Genre(),
                 DurationSeconds = structureRng.Next(120, 421),
                 ReleaseDate = faker.Date.Past(10),
-                CoverImageUrl = CoverGenerator.GenerateCoverUrl(structureSeed), // или base64
-                AudioUrl = AudioFiles[globalIndex % AudioFiles.Length]           // циклически берём из твоих файлов
+                CoverImageUrl = CoverGenerator.GenerateCoverUrl(structureSeedInt), // int вместо long
+                AudioUrl = AudioFiles[globalIndex % AudioFiles.Length]
             };
 
-            // Likes — отдельный независимый слой
+            // Likes — отдельный слой
             long likesSeed = CombineSeed(structureSeed, 1);
-            song.Likes = LikesGenerator.GenerateLikes((int)(likesSeed & 0x7FFFFFFF), _avgLikes);
+            int likesSeedInt = (int)(likesSeed & 0x7FFFFFFF);
+            song.Likes = LikesGenerator.GenerateLikes(likesSeedInt); // только 1 аргумент
 
-            // Reviews — ещё один независимый слой
+            // Reviews — отдельный слой
             long reviewsSeed = CombineSeed(likesSeed, 2);
-            var reviewsRng = new Random((int)(reviewsSeed & 0x7FFFFFFF));
+            int reviewsSeedInt = (int)(reviewsSeed & 0x7FFFFFFF);
+            var reviewsRng = new Random(reviewsSeedInt);
             int reviewCount = reviewsRng.Next(0, maxReviews + 1);
-            song.Reviews = ReviewGenerator.GenerateReviews((int)reviewsSeed, reviewCount);
+            song.Reviews = ReviewGenerator.GenerateReviews(reviewsSeedInt, reviewCount);
 
             songs.Add(song);
         }
@@ -78,7 +82,7 @@ public class FakeDataGenerator
     {
         var templates = new[]
         {
-            $"{faker.Music.SongName()}",
+            $"{faker.Lorem.Word()} {faker.Lorem.Word()}",
             $"{faker.Hacker.Verb()} {faker.Commerce.ProductAdjective()}",
             $"{faker.Commerce.Color()} {faker.Commerce.ProductMaterial()}",
             $"{faker.Hacker.Adjective()} {faker.Hacker.Noun()}",
@@ -88,7 +92,6 @@ public class FakeDataGenerator
         return templates[rng.Next(templates.Length)];
     }
 
-    // Хороший способ комбинировать seed + индекс (SplitMix64-like)
     private static long CombineSeed(long baseSeed, int offset)
     {
         ulong z = (ulong)baseSeed + (ulong)offset * 0x9E3779B97F4A7C15UL;
