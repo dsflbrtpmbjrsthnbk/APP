@@ -4,88 +4,96 @@ using MusicApp.Models;
 namespace MusicApp.Generators;
 
 /// <summary>
-/// Base generator for creating fake music data with reproducible results
+/// Генератор фейковых песен с воспроизводимыми результатами и независимыми параметрами
 /// </summary>
 public class FakeDataGenerator
 {
-    private readonly int _masterSeed;
+    private readonly long _userSeed;        // основной seed от пользователя (64-bit)
+    private readonly string _locale;        // локаль Bogus (en_US, de_DE, uk_UA и т.д.)
+    private readonly double _avgLikes;      // желаемое среднее количество лайков
 
-    public FakeDataGenerator(int masterSeed = 42)
+    // Список реальных аудиофайлов из wwwroot/audio/
+    private static readonly string[] AudioFiles = new[]
     {
-        _masterSeed = masterSeed;
+        "/audio/sample1",
+        "/audio/sample2",
+        "/audio/sample3",
+        "/audio/sample4"
+    };
+
+    public FakeDataGenerator(long userSeed = 1, string locale = "en_US", double avgLikes = 1.2)
+    {
+        _userSeed = userSeed;
+        _locale = locale;
+        _avgLikes = Math.Clamp(avgLikes, 0, 10);
     }
 
     /// <summary>
-    /// Generates a list of songs with seeded randomization
+    /// Генерирует список песен начиная с указанного индекса
     /// </summary>
-    public List<Song> GenerateSongs(int count, int reviewAmount = 4)
+    public List<Song> GenerateSongs(int startIndex = 0, int count = 10, int maxReviews = 5)
     {
         var songs = new List<Song>();
-        var songsRandom = new Random(_masterSeed);
+        var faker = new Faker(_locale);
 
         for (int i = 0; i < count; i++)
         {
-            var songSeed = songsRandom.Next();
-            var song = GenerateSong(i + 1, songSeed, reviewAmount);
+            int globalIndex = startIndex + i;
+
+            // Основной seed для структуры песни (название, артист, альбом, жанр, обложка)
+            long structureSeed = CombineSeed(_userSeed, globalIndex);
+            var structureRng = new Random((int)(structureSeed & 0x7FFFFFFF));
+            faker.Random = new Randomizer(structureRng.Next());
+
+            var song = new Song
+            {
+                Id = globalIndex + 1,
+                Title = GenerateSongTitle(faker, structureRng),
+                Artist = faker.Name.FullName() ?? faker.Company.CompanyName(),
+                Album = structureRng.Next(5) == 0 ? "Single" : faker.Lorem.Sentence(2..4).TrimEnd('.'),
+                Genre = faker.Music.Genre(),
+                DurationSeconds = structureRng.Next(120, 421),
+                ReleaseDate = faker.Date.Past(10),
+                CoverImageUrl = CoverGenerator.GenerateCoverUrl(structureSeed), // или base64
+                AudioUrl = AudioFiles[globalIndex % AudioFiles.Length]           // циклически берём из твоих файлов
+            };
+
+            // Likes — отдельный независимый слой
+            long likesSeed = CombineSeed(structureSeed, 1);
+            song.Likes = LikesGenerator.GenerateLikes((int)(likesSeed & 0x7FFFFFFF), _avgLikes);
+
+            // Reviews — ещё один независимый слой
+            long reviewsSeed = CombineSeed(likesSeed, 2);
+            var reviewsRng = new Random((int)(reviewsSeed & 0x7FFFFFFF));
+            int reviewCount = reviewsRng.Next(0, maxReviews + 1);
+            song.Reviews = ReviewGenerator.GenerateReviews((int)reviewsSeed, reviewCount);
+
             songs.Add(song);
         }
 
         return songs;
     }
 
-    private Song GenerateSong(int id, int seed, int maxReviews)
+    private string GenerateSongTitle(Faker faker, Random rng)
     {
-        var faker = new Faker { Random = new Randomizer(seed) };
-
-        var song = new Song
-        {
-            Id = id,
-            Title = GenerateSongTitle(seed),
-            Artist = faker.Name.FullName(),
-            Album = faker.Commerce.ProductName(),
-            DurationSeconds = faker.Random.Int(120, 420),
-            ReleaseDate = faker.Date.Past(10),
-            Genre = faker.PickRandom(new[]
-            {
-                "Rock",
-                "Pop",
-                "Jazz",
-                "Classical",
-                "Electronic",
-                "Hip Hop",
-                "Country"
-            })
-        };
-
-        // Generate likes
-        song.Likes = LikesGenerator.GenerateLikes(seed);
-
-        // Generate reviews with seeded randomization
-        var reviewsRandom = new Random(seed);
-        var reviewCount = reviewsRandom.Next(maxReviews);
-        song.Reviews = ReviewGenerator.GenerateReviews(seed, reviewCount);
-
-        // Generate cover
-        song.CoverImageUrl = CoverGenerator.GenerateCoverUrl(seed);
-
-        // Generate audio info
-        song.Audio = AudioGenerator.GenerateAudio(seed);
-
-        return song;
-    }
-
-    private string GenerateSongTitle(int seed)
-    {
-        var faker = new Faker { Random = new Randomizer(seed) };
-
         var templates = new[]
         {
+            $"{faker.Music.SongName()}",
             $"{faker.Hacker.Verb()} {faker.Commerce.ProductAdjective()}",
             $"{faker.Commerce.Color()} {faker.Commerce.ProductMaterial()}",
             $"{faker.Hacker.Adjective()} {faker.Hacker.Noun()}",
             faker.Company.Bs()
         };
 
-        return faker.PickRandom(templates);
+        return templates[rng.Next(templates.Length)];
+    }
+
+    // Хороший способ комбинировать seed + индекс (SplitMix64-like)
+    private static long CombineSeed(long baseSeed, int offset)
+    {
+        ulong z = (ulong)baseSeed + (ulong)offset * 0x9E3779B97F4A7C15UL;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9UL;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBUL;
+        return (long)(z ^ (z >> 31));
     }
 }

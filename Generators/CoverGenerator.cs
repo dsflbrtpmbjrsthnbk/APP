@@ -8,7 +8,7 @@ public static class CoverGenerator
         "F7DC6F", "BB8FCE", "85C1E2", "F8B500", "52B788"
     };
     
-    /// <summary>
+    /// <summary
     /// Generates a deterministic cover image URL based on seed
     /// </summary>
     public static string GenerateCoverUrl(int seed)

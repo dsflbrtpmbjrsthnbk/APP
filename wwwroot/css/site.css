@@ -8,28 +8,76 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
 body {
+  background-color: #121212;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin-bottom: 60px;
 }
 
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  white-space: nowrap;
-  line-height: 60px;
+.navbar {
+  background-color: #1f1f1f !important;
+  border-bottom: 1px solid #333;
+}
+
+.navbar-brand, .nav-link {
+  color: #e0e0e0 !important;
+}
+
+.navbar-brand:hover, .nav-link:hover {
+  color: #ffffff !important;
+}
+
+.card {
+  background-color: #1f1f1f;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
 }
 
 .card-img-top {
   height: 200px;
   object-fit: cover;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.card-body {
+  background: linear-gradient(180deg, #1f1f1f 0%, #121212 100%);
+}
+
+.form-control, .form-select {
+  background-color: #282828;
+  border: 1px solid #404040;
+  color: #e0e0e0;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #5c5c5c;
+  box-shadow: 0 0 0 0.2rem rgba(255,255,255,0.1);
+}
+
+.btn-primary {
+  background-color: #1db954;
+  border-color: #1db954;
+}
+
+.btn-primary:hover {
+  background-color: #1ed760;
+  border-color: #1ed760;
+}
+
+.footer {
+  background-color: #1f1f1f;
+  border-top: 1px solid #333;
+  color: #b3b3b3;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  line-height: 60px;
 }

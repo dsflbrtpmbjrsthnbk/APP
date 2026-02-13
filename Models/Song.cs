@@ -14,3 +14,9 @@ public class Song
     public string CoverImageUrl { get; set; } = string.Empty;
     public AudioTrack? Audio { get; set; }
 }
+public class Song
+{
+    // ... все существующие свойства
+
+    public string AudioUrl { get; set; } = string.Empty;  // ← новое
+}

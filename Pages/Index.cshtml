@@ -4,64 +4,70 @@
     ViewData["Title"] = "Music Library";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Music Library</h1>
-    <p>Demonstrating seeded random data generation</p>
-</div>
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Music Library</h1>
+    <p class="text-center text-muted mb-4">Seeded random music showcase</p>
 
-<div class="row mb-3">
-    <div class="col-md-12">
-        <form method="get">
-            <div class="input-group">
-                <label class="input-group-text">Songs:</label>
-                <input type="number" name="songCount" value="@Model.SongCount" class="form-control" min="1" max="20" />
-                <label class="input-group-text">Max Reviews:</label>
-                <input type="number" name="reviewAmount" value="@Model.ReviewAmount" class="form-control" min="0" max="10" />
-                <button type="submit" class="btn btn-primary">Generate</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="row">
-    @foreach (var song in Model.Songs)
-    {
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100">
-                <img src="@song.CoverImageUrl" class="card-img-top" alt="@song.Title cover" />
-                <div class="card-body">
-                    <h5 class="card-title">@song.Title</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">@song.Artist</h6>
-                    <p class="card-text">
-                        <small>
-                            <strong>Album:</strong> @song.Album<br />
-                            <strong>Genre:</strong> @song.Genre<br />
-                            <strong>Duration:</strong> @TimeSpan.FromSeconds(song.DurationSeconds).ToString(@"mm\:ss")<br />
-                            <strong>Likes:</strong> @song.Likes.ToString("N0")
-                        </small>
-                    </p>
-                    
-                    @if (song.Reviews.Any())
-                    {
-                        <hr />
-                        <h6>Reviews (@song.Reviews.Count):</h6>
-                        <ul class="list-unstyled small">
-                            @foreach (var review in song.Reviews)
-                            {
-                                <li class="mb-1">@review</li>
-                            }
-                        </ul>
-                    }
-                    
-                    @if (song.Audio != null)
-                    {
-                        <hr />
-                        <small class="text-muted">
-                            Audio: @song.Audio.Format.ToUpper() | @song.Audio.Bitrate kbps | @(song.Audio.FileSizeBytes / 1024.0 / 1024.0).ToString("F2") MB
-                        </small>
-                    }
-                </div>
-            </div>
+    <div class="row g-3 mb-4 align-items-end">
+        <div class="col-auto">
+            <label class="form-label">Language</label>
+            <select name="locale" class="form-select"
+                    hx-get="/Index" hx-target="#songs-container" hx-trigger="change"
+                    hx-include="[name='seed'],[name='avgLikes'],[name='viewMode'],[name='page']">
+                <option value="en_US" selected="@(Model.Locale == "en_US")">English (USA)</option>
+                <option value="de_DE" selected="@(Model.Locale == "de_DE")">German (Germany)</option>
+                <option value="uk_UA" selected="@(Model.Locale == "uk_UA")">Ukrainian (Ukraine)</option>
+            </select>
         </div>
-    }
+
+        <div class="col-auto">
+            <label class="form-label">Seed</label>
+            <input type="number" name="seed" value="@Model.Seed" class="form-control"
+                   hx-get="/Index" hx-trigger="change delay:400ms" hx-target="#songs-container"
+                   hx-include="this, [name='locale'],[name='avgLikes'],[name='viewMode'],[name='page']" />
+        </div>
+
+        <div class="col-auto">
+            <label class="form-label">Avg Likes</label>
+            <input type="number" step="0.1" name="avgLikes" value="@Model.AvgLikes.ToString("F1")" min="0" max="10" class="form-control"
+                   hx-get="/Index" hx-trigger="change delay:400ms" hx-target="#songs-container"
+                   hx-include="this, [name='seed'],[name='locale'],[name='viewMode'],[name='page']" />
+        </div>
+
+        <div class="col-auto">
+            <label class="form-label">View</label>
+            <select name="viewMode" class="form-select"
+                    hx-get="/Index" hx-target="#songs-container" hx-trigger="change"
+                    hx-include="[name='seed'],[name='locale'],[name='avgLikes'],[name='page']">
+                <option value="gallery" selected="@(Model.ViewMode == "gallery")">Gallery</option>
+                <option value="table" selected="@(Model.ViewMode == "table")">Table</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="songs-container">
+        @if (Model.ViewMode == "table")
+        {
+            <partial name="_TableView" model="Model.Songs" />
+        }
+        else
+        {
+            <partial name="_GalleryView" model="Model.Songs" />
+        }
+    </div>
+
+    <!-- Простая пагинация (можно улучшить) -->
+    <nav aria-label="Pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.Page == 0 ? "disabled" : "")">
+                <a class="page-link" href="?page=@(Model.Page - 1)&seed=@Model.Seed&locale=@Model.Locale&avgLikes=@Model.AvgLikes&viewMode=@Model.ViewMode">Previous</a>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link">Page @(Model.Page + 1)</span>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page=@(Model.Page + 1)&seed=@Model.Seed&locale=@Model.Locale&avgLikes=@Model.AvgLikes&viewMode=@Model.ViewMode">Next</a>
+            </li>
+        </ul>
+    </nav>
 </div>
