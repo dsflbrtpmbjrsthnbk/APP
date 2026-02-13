@@ -13,10 +13,5 @@ public class Song
     public List<string> Reviews { get; set; } = new();
     public string CoverImageUrl { get; set; } = string.Empty;
     public AudioTrack? Audio { get; set; }
-}
-public class Song
-{
-    // ... все существующие свойства
-
-    public string AudioUrl { get; set; } = string.Empty;  // ← новое
+    public string AudioUrl { get; set; } = string.Empty;  // путь к mp3, например /audio/sample1
 }
